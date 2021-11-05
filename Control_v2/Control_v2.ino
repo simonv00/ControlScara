@@ -94,6 +94,7 @@ int cajaX = 0;
 int cajaY = 0;
 
 float servoInicial = 0;
+float neumaticaFinal = 0;
 
 void setup(){
   Serial.begin(115200);
@@ -127,14 +128,14 @@ void setup(){
 }
 
 void Recoger(float e1, float e2){
-  Serial.print("e1: ");
-  Serial.println(e1);
-  Serial.print("e2: ");
-  Serial.println(e2);
-  Serial.println("X: ");
-  Serial.println(X);
-  Serial.println("Y: ");
-  Serial.println(Y);
+  //Serial.print("e1: ");
+  //Serial.println(e1);
+  //Serial.print("e2: ");
+  //Serial.println(e2);
+  //Serial.println("X: ");
+  //Serial.println(X);
+  //Serial.println("Y: ");
+  //Serial.println(Y);
   if(X == rampaX && Y == rampaY && abs(e1) < 10 && abs(e2) < 10){
     rampa = true;
     caja = false;
@@ -162,7 +163,7 @@ void ServoAccion(){
     digitalWrite (servo1, LOW);
     digitalWrite (servo2, LOW);
   }
-  else if(difT >= 2 && difT <= 2.1 && servoInicial > 10){
+  else if(difT >= 2.5 && difT <= 2.6 && servoInicial > 10){
     digitalWrite (servo1, HIGH);
     digitalWrite (servo2, LOW);
   }
@@ -177,15 +178,19 @@ void NeumaticaAccion(){
   if(rampa && !recogido && !neumatica && entrada){
       Serial.println("Neumatica");
       neumatica = true;
-      digitalWrite(Neumatica,LOW);
-  }
-  else if (caja && recogido && eww && entrada){
-      neumatica = false;
-      entrada = false;
-      recogido = false;
       digitalWrite(Neumatica,HIGH);
-      X = 265;
-      Y = 0;
+  }
+  else if (caja && recogido && neumatica && entrada && neumaticaFinal < 10){
+      neumaticaFinal = micros();
+  }
+  float currT = micros();
+  float difT = ((float) (currT - neumaticaFinal))/( 1.0e6 );
+  if(difT > 4 && neumaticaFinal > 10){
+    neumatica = false;
+    
+    entrada = false;
+    recogido = false;
+    digitalWrite(Neumatica,LOW);
   }
 }
 
@@ -200,6 +205,7 @@ void MovimientoSoltar(){
 
 void Take(int x, int y){
   servoInicial = 0;
+  neumaticaFinal = 0;
   entrada = true;
   rampa = false;
   caja = false;
@@ -273,7 +279,7 @@ void loop(){
     int dir1 = setDir(u1);
     int dir2 = setDir(u2);
     
-    //plotInfo(thetaActual1, thetaActual2);
+    plotInfo(thetaActual1, thetaActual2);
     
     setMotor(dir1,PWM_Motor1,pwr1,Pin1_Motor1,Pin2_Motor1);
     setMotor(dir2,PWM_Motor2,pwr2,Pin1_Motor2,Pin2_Motor2);
@@ -400,10 +406,10 @@ void parseData() {      // split the data into its parts
     Serial.println("got Angles");
     strtokIndx = strtok(NULL, ","); // this continues where the previous call left off
     theta1 = atoi(strtokIndx);     // convert this part to an integer
-    theta1 += 90;
+    theta1 += 95;
     strtokIndx = strtok(NULL, ",");
     theta2 = atoi(strtokIndx);     // convert this part to a float
-    theta2 += 80;
+    theta2 += 75;
   }
 }
 
@@ -461,7 +467,7 @@ void Home(){
     contHome++;
     Stop();
     
-    setMotor(1,PWM_Motor1,90,Pin1_Motor1,Pin2_Motor1);
+    setMotor(1,PWM_Motor1,150,Pin1_Motor1,Pin2_Motor1);
     while(digitalRead(Pulsador1_Brazo1) != LOW){
       continue;
     }
@@ -494,8 +500,9 @@ void Stop(){
   setMotor(0,PWM_Motor2,0,Pin1_Motor2,Pin2_Motor2);
   setMotor(0,PWM_Motor1,0,Pin1_Motor1,Pin2_Motor1);
   servoInicial = 0;
+  neumaticaFinal = 0;
   inicio = false;
-  neumatica = HIGH;
+  neumatica = false;
   recogido = false;
   entrada = false;
   digitalWrite(Neumatica,LOW);  
@@ -509,12 +516,12 @@ void inverseKinematics(){
   float alpha = getAlpha();
   float beta = getBeta();
   if(Y < 0){
-    theta1 = RAD_to_Grados(alpha + gamma)+90;
-    theta2 = RAD_to_Grados(beta- Pi)+80;
+    theta1 = RAD_to_Grados(alpha + gamma)+95;
+    theta2 = RAD_to_Grados(beta- Pi)+75;
   }
   else{
-    theta1 = RAD_to_Grados(gamma - alpha)+90;
-    theta2 = RAD_to_Grados(Pi - beta)+80;
+    theta1 = RAD_to_Grados(gamma - alpha)+95;
+    theta2 = RAD_to_Grados(Pi - beta)+75;
   }
   checkLimits1();
   checkLimits2();
@@ -607,7 +614,7 @@ float PWM2(int control){
   if( pwm > maxSpeed ){
     pwm = maxSpeed;
   }
-  int pwm2 = map(pwm, 0 , maxSpeed, 31, 255);
+  int pwm2 = map(pwm, 0 , maxSpeed, 30, 255);
   return pwm2;
 }
 
