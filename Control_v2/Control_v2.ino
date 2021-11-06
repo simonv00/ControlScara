@@ -406,7 +406,7 @@ void parseData() {      // split the data into its parts
     Serial.println("got Angles");
     strtokIndx = strtok(NULL, ","); // this continues where the previous call left off
     theta1 = atoi(strtokIndx);     // convert this part to an integer
-    theta1 += 95;
+    theta1 += 90;
     strtokIndx = strtok(NULL, ",");
     theta2 = atoi(strtokIndx);     // convert this part to a float
     theta2 += 75;
@@ -516,11 +516,11 @@ void inverseKinematics(){
   float alpha = getAlpha();
   float beta = getBeta();
   if(Y < 0){
-    theta1 = RAD_to_Grados(alpha + gamma)+95;
+    theta1 = RAD_to_Grados(alpha + gamma)+90;
     theta2 = RAD_to_Grados(beta- Pi)+75;
   }
   else{
-    theta1 = RAD_to_Grados(gamma - alpha)+95;
+    theta1 = RAD_to_Grados(gamma - alpha)+90;
     theta2 = RAD_to_Grados(Pi - beta)+75;
   }
   checkLimits1();
